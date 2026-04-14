@@ -11,15 +11,15 @@ lora&qlora/
 ├── requirements.txt   # Dependências do projeto
 ├── .env               # Variáveis de ambiente (não versionado)
 ├── .gitignore
-├── train.jsonl        # Dataset de treino gerado (90%)
-└── test.jsonl         # Dataset de teste gerado (10%)
+├── train.jsonl        # Dataset de treino gerado (45 exemplos)
+└── test.jsonl         # Dataset de teste gerado (5 exemplos)
 ```
 
 ## Roteiro de Implementação
 
 ### Passo 1 — Engenharia de Dados Sintéticos
 
-A classe `DatasetGenerator` usa a API do Llama para gerar pares de instrução/resposta no domínio de programação Python. O dataset é dividido em 90% treino e 10% teste e salvo no formato `.jsonl`.
+A classe `DatasetGenerator` usa a API do Groq (modelo Llama 3.3 70B) para gerar pares de instrução/resposta no domínio de programação Python. O dataset é dividido em 90% treino e 10% teste e salvo no formato `.jsonl`.
 
 ### Passo 2 — Configuração da Quantização (QLoRA)
 
@@ -58,21 +58,29 @@ Ao final, o adaptador é salvo com `trainer.model.save_pretrained()`.
 pip install -r requirements.txt
 ```
 
-> **Requisito:** GPU com suporte a CUDA e pelo menos 16 GB de VRAM (ex: Google Colab T4 ou A100).
+> **Requisito para treinamento:** GPU com suporte a CUDA e pelo menos 16 GB de VRAM (ex: Google Colab T4 ou A100).
 
 ## Configuração
 
-Preencha o arquivo `.env` com sua chave da API:
+Crie um arquivo `.env` na raiz do projeto com sua chave da API do Groq:
 
 ```
-LLAMA_API_KEY=chave
+GROQ_API_KEY=chave
 ```
+
+Obtenha sua chave gratuitamente em [console.groq.com](https://console.groq.com).
 
 ## Execução
 
 ```bash
 python main.py
 ```
+
+O pipeline executa em sequência:
+1. Gera 50 pares de instrução via Groq API e salva `train.jsonl` (45) e `test.jsonl` (5)
+2. Carrega o modelo base (`meta-llama/Llama-2-7b-hf`) quantizado em 4 bits
+3. Aplica os adaptadores LoRA
+4. Treina com `SFTTrainer` e salva o adaptador em `lora_adapter/`
 
 ## Uso de IA Generativa
 
